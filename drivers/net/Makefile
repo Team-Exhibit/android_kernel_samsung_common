@@ -309,3 +309,8 @@ obj-$(CONFIG_CAIF) += caif/
 obj-$(CONFIG_OCTEON_MGMT_ETHERNET) += octeon/
 obj-$(CONFIG_PCH_GBE) += pch_gbe/
 obj-$(CONFIG_TILE_NET) += tile/
+
+ifdef CONFIG_PHONET
+obj-$(CONFIG_U8500_SHRM) += u8500_shrm.o
+obj-$(CONFIG_MODEM_M6718_SPI) += m6718_modem_net.o
+endif

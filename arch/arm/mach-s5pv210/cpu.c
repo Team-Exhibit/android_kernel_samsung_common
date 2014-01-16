@@ -25,7 +25,6 @@
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/mach-types.h>
 #include <asm/proc-fns.h>
 #include <mach/map.h>
 #include <mach/regs-clock.h>
@@ -96,31 +95,7 @@ static struct map_desc s5pv210_iodesc[] __initdata = {
 		.pfn		=__phys_to_pfn(S5PV210_PA_HSPHY),
 		.length		= SZ_4K,
 		.type		= MT_DEVICE,
-	}, {
-		.virtual	= (unsigned long)S3C_VA_OTG,
-		.pfn		= __phys_to_pfn(S5PV210_PA_OTG),
-		.length		= SZ_1M,
-		.type		= MT_DEVICE,
-	}, {
-		.virtual	= (unsigned long)S3C_VA_OTGSFR,
-		.pfn		= __phys_to_pfn(S5PV210_PA_OTGSFR),
-		.length		= SZ_1M,
-		.type		= MT_DEVICE,
-	},
-#if defined(CONFIG_HRT_RTC)
-	{
-		.virtual	= (unsigned long)S5P_VA_RTC,
-		.pfn		= __phys_to_pfn(S5PV210_PA_RTC),
-		.length		= SZ_4K,
-		.type		= MT_DEVICE,
-	},
-#endif
-	{
-		.virtual	= (unsigned long)S5P_VA_AUDSS,
-		.pfn		= __phys_to_pfn(S5PV210_PA_AUDSS),
-		.length		= SZ_1M,
-		.type		= MT_DEVICE,
-	},
+	}
 };
 
 static void s5pv210_idle(void)
@@ -216,7 +191,6 @@ int __init s5pv210_init(void)
 	pm_idle = s5pv210_idle;
 
 	/* set sw_reset function */
-	if (!machine_is_herring())
 		s5p_reset_hook = s5pv210_sw_reset;
 
 	return sysdev_register(&s5pv210_sysdev);

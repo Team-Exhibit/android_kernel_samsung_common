@@ -847,7 +847,7 @@ static int iface_stat_fmt_proc_read(char *page, char **num_items_returned,
 			stats = &no_dev_stats;
 		}
 		/*
-		 * If the meaning of the data changes, then update the fmtX
+		 * if the meaning of the data changes, then update the fmtx
 		 * string.
 		 */
 		if (fmt == 1) {

@@ -75,6 +75,12 @@ static int pppopns_recv_core(struct sock *sk_raw, struct sk_buff *skb)
 	__u32 now = jiffies;
 	struct header *hdr;
 
+	/* Linearize the skb if it is fragmented */
+	if (skb_linearize(skb) < 0) {
+		printk(KERN_ERR "%s: Failed to linearize the skb\n", __func__);
+		goto drop;
+	}
+
 	/* Skip transport header */
 	skb_pull(skb, skb_transport_header(skb) - skb->data);
 

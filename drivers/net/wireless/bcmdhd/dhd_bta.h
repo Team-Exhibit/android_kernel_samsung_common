@@ -1,7 +1,7 @@
 /*
  * BT-AMP support routines
  *
- * Copyright (C) 1999-2011, Broadcom Corporation
+ * Copyright (C) 1999-2012, Broadcom Corporation
  * 
  *         Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: dhd_bta.h,v 1.2 2009-02-26 22:35:56 Exp $
+ * $Id: dhd_bta.h 291086 2011-10-21 01:17:24Z $
  */
 #ifndef __dhd_bta_h__
 #define __dhd_bta_h__

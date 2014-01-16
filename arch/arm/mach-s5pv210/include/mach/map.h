@@ -16,11 +16,7 @@
 #include <plat/map-base.h>
 #include <plat/map-s5p.h>
 
-#if defined(CONFIG_MACH_SMDKV210)
-#define S5PV210_PA_SDRAM	(0x20000000)
-#else
-#define S5PV210_PA_SDRAM	(0x30000000)
-#endif
+#define S5PV210_PA_SDRAM		0x20000000
 
 #define S5PV210_PA_SROM_BANK5		0xA8000000
 
@@ -57,9 +53,6 @@
 #define S5PV210_PA_WATCHDOG		0xE2700000
 #define S5PV210_PA_RTC			0xE2800000
 
-#define S5PV210_VA_RTC          S3C_ADDR(0x00c00000)
-#define S5P_VA_RTC		S5PV210_VA_RTC
-
 #define S5PV210_PA_UART			0xE2900000
 
 #define S5PV210_PA_SROMC		0xE8000000
@@ -68,26 +61,8 @@
 
 #define S5PV210_PA_HSMMC(x)		(0xEB000000 + ((x) * 0x100000))
 
-/* usb */
-#define S5PV210_PA_OTG          (0xEC000000)
-#define S5PV210_SZ_OTG          SZ_1M
-
-#define S5PV210_PA_OTGSFR       (0xEC100000)
-#define S5PV210_SZ_OTGSFR       SZ_1M
-
-#define S5PV210_PA_USB_EHCI	(0xEC200000)
-#define S5P_PA_USB_EHCI		S5PV210_PA_USB_EHCI
-#define S5P_SZ_USB_EHCI     	SZ_1M
-
-#define S5PV210_PA_USB_OHCI	(0xEC300000)
-#define S5P_PA_USB_OHCI		S5PV210_PA_USB_OHCI
-#define S5P_SZ_USB_OHCI     	SZ_1M
-/* end usb */
-
 #define S5PV210_PA_HSOTG		0xEC000000
 #define S5PV210_PA_HSPHY		0xEC100000
-
-#define S5PV210_PA_AUDSS		(0xEEE10000)
 
 #define S5PV210_PA_IIS0			0xEEE30000
 #define S5PV210_PA_IIS1			0xE2100000
@@ -95,31 +70,6 @@
 
 #define S5PV210_PA_DMC0			0xF0000000
 #define S5PV210_PA_DMC1			0xF1400000
-
-#define S5P_VA_VIC0             (S3C_VA_IRQ + 0x0)
-#define S5P_VA_VIC1             (S3C_VA_IRQ + 0x10000)
-#define S5P_VA_VIC2             (S3C_VA_IRQ + 0x20000)
-#define S5P_VA_VIC3             (S3C_VA_IRQ + 0x30000)
-
-#define S5PV210_PA_LCD	   	(0xF8000000)
-#define S5P_PA_LCD		S5PV210_PA_LCD
-#define S5PV210_SZ_LCD		SZ_1M
-#define S5P_SZ_LCD		S5PV210_SZ_LCD
-
-#define S5PV210_PA_JPEG		(0xFB600000)
-#define S5PV210_SZ_JPEG		SZ_1M
-
-#define S5PV210_SZ_FIMC0	SZ_1M
-#define S5P_SZ_FIMC0		S5PV210_SZ_FIMC0
-#define S5PV210_SZ_FIMC1	SZ_1M
-#define S5P_SZ_FIMC1		S5PV210_SZ_FIMC1
-#define S5PV210_SZ_FIMC2	SZ_1M
-#define S5P_SZ_FIMC2		S5PV210_SZ_FIMC2
-
-#define S5PV210_PA_IPC		(0xFB700000)
-#define S5P_PA_IPC		S5PV210_PA_IPC
-#define S5PV210_SZ_IPC		SZ_1M
-#define S5P_SZ_IPC		S5PV210_SZ_IPC
 
 #define S5PV210_PA_VIC0			0xF2000000
 #define S5PV210_PA_VIC1			0xF2100000
@@ -137,28 +87,6 @@
 #define S5PV210_PA_FIMC0		0xFB200000
 #define S5PV210_PA_FIMC1		0xFB300000
 #define S5PV210_PA_FIMC2		0xFB400000
-
-/* mfc */
-#define S5PV210_PA_MFC		(0xF1700000)
-#define S5PV210_SZ_MFC		SZ_1M
-#define S5P_PA_MFC		S5PV210_PA_MFC
-#define S5P_SZ_MFC		S5PV210_SZ_MFC
-
-
-/* jpeg */
-#define S5PV210_PA_JPEG		(0xFB600000)
-#define S5P_PA_JPEG		S5PV210_PA_JPEG
-#define S5P_SZ_JPEG		SZ_1M
-
-/* rotator */
-#define S5PV210_PA_ROTATOR	(0xFA300000)
-#define S5P_PA_ROTATOR		S5PV210_PA_ROTATOR
-#define S5P_SZ_ROTATOR		SZ_1M
-
-/* fimg2d */
-#define S5PV210_PA_FIMG2D	(0xFA000000)
-#define S5P_PA_FIMG2D		S5PV210_PA_FIMG2D
-#define S5P_SZ_FIMG2D		SZ_1M
 
 /* Compatibiltiy Defines */
 
@@ -204,38 +132,4 @@
 
 #define S5P_SZ_UART			SZ_256
 
-/* CEC */
-#define S5PV210_PA_CEC		(0xE1B00000)
-#define S5P_PA_CEC		S5PV210_PA_CEC
-#define S5P_SZ_CEC		SZ_4K
-
-/* TVOUT */
-#define S5PV210_PA_TVENC	(0xF9000000)
-#define S5P_PA_TVENC		S5PV210_PA_TVENC
-#define S5P_SZ_TVENC		SZ_1M
-
-#define S5PV210_PA_VP		(0xF9100000)
-#define S5P_PA_VP		S5PV210_PA_VP
-#define S5P_SZ_VP		SZ_1M
-
-#define S5PV210_PA_MIXER	(0xF9200000)
-#define S5P_PA_MIXER		S5PV210_PA_MIXER
-#define S5P_SZ_MIXER		SZ_1M
-
-#define S5PV210_PA_HDMI		(0xFA100000)
-#define S5P_PA_HDMI		S5PV210_PA_HDMI
-#define S5P_SZ_HDMI		SZ_1M
-
-#define S5PV210_I2C_HDMI_PHY	(0xFA900000)
-#define S5P_I2C_HDMI_PHY	S5PV210_I2C_HDMI_PHY
-#define S5P_I2C_HDMI_SZ_PHY	SZ_1K
-
-/* usb */
-#define S3C_PA_OTG              S5PV210_PA_OTG
-#define S3C_SZ_OTG              S5PV210_SZ_OTG
-
-#define S3C_PA_OTGSFR           S5PV210_PA_OTGSFR
-#define S3C_SZ_OTGSFR           S5PV210_SZ_OTGSFR
-
-/* end usb */
 #endif /* __ASM_ARCH_MAP_H */

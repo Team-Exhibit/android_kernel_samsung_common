@@ -566,6 +566,14 @@ config LOG_BUF_SHIFT
 		     12 =>  4 KB
 
 #
+# SAMSUNG_LOG_BUF is the only Samsung Debug feature configured here. All other Samsung Product Features are  
+# configured in /android/kernel/arch/arm/mach-ux500/Kconfig
+#
+config SAMSUNG_LOG_BUF 
+	bool "Fixed 1MB Log Buffer Address"
+	---help---
+	  This option enables Fixed Physical RAM Address
+#
 # Architectures with an unreliable sched_clock() should select this:
 #
 config HAVE_UNSTABLE_SCHED_CLOCK
@@ -1280,6 +1288,15 @@ config PROFILING
 	help
 	  Say Y here to enable the extended profiling support mechanisms used
 	  by profilers such as OProfile.
+
+config BOOTTIME
+	bool "Boot time measurments"
+	default n
+	help
+		Adds sysfs entries (boottime/) with start-up timing information.
+		If CONFIG_DEBUG_FS is enabled, detailed information about the
+		boot time, including system load during boot can be extraced.
+		This information can be visualised with help of the bootgraph script.
 
 #
 # Place an empty function call at each tracepoint site. Can be

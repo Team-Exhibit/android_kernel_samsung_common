@@ -25,16 +25,8 @@
 
 #include <mach/regs-irq.h>
 #include <mach/regs-clock.h>
-#include <mach/regs-mem.h>
-#include <mach/power-domain.h>
 
-static struct sleep_save core_save[] = {
-	/* PLL Control */
-	SAVE_ITEM(S5P_APLL_CON),
-	SAVE_ITEM(S5P_MPLL_CON),
-	SAVE_ITEM(S5P_EPLL_CON),
-	SAVE_ITEM(S5P_VPLL_CON),
-
+static struct sleep_save s5pv210_core_save[] = {
 	/* Clock source */
 	SAVE_ITEM(S5P_CLK_SRC0),
 	SAVE_ITEM(S5P_CLK_SRC1),
@@ -80,7 +72,7 @@ static struct sleep_save core_save[] = {
 
 	/* Clock Blcok and Bus gate */
 	SAVE_ITEM(S5P_CLKGATE_BLOCK),
-	SAVE_ITEM(S5P_CLKGATE_IP5),
+	SAVE_ITEM(S5P_CLKGATE_BUS0),
 
 	/* Clock ETC */
 	SAVE_ITEM(S5P_CLK_OUT),
@@ -123,6 +115,10 @@ static void s5pv210_pm_prepare(void)
 	/* ensure at least INFORM0 has the resume address */
 	__raw_writel(virt_to_phys(s3c_cpu_resume), S5P_INFORM0);
 
+	tmp = __raw_readl(S5P_SLEEP_CFG);
+	tmp &= ~(S5P_SLEEP_CFG_OSC_EN | S5P_SLEEP_CFG_USBOSC_EN);
+	__raw_writel(tmp, S5P_SLEEP_CFG);
+
 	/* WFI for SLEEP mode configuration by SYSCON */
 	tmp = __raw_readl(S5P_PWR_CFG);
 	tmp &= S5P_CFG_WFI_CLEAN;
@@ -134,12 +130,7 @@ static void s5pv210_pm_prepare(void)
 	tmp |= S5P_OTHER_SYSC_INTOFF;
 	__raw_writel(tmp, S5P_OTHERS);
 
-	__raw_writel(0xffffffff, (VA_VIC0 + VIC_INT_ENABLE_CLEAR));
-	__raw_writel(0xffffffff, (VA_VIC1 + VIC_INT_ENABLE_CLEAR));
-	__raw_writel(0xffffffff, (VA_VIC2 + VIC_INT_ENABLE_CLEAR));
-	__raw_writel(0xffffffff, (VA_VIC3 + VIC_INT_ENABLE_CLEAR));
-
-	s3c_pm_do_save(core_save, ARRAY_SIZE(core_save));
+	s3c_pm_do_save(s5pv210_core_save, ARRAY_SIZE(s5pv210_core_save));
 }
 
 static int s5pv210_pm_add(struct sys_device *sysdev)
@@ -162,29 +153,14 @@ arch_initcall(s5pv210_pm_drvinit);
 
 static void s5pv210_pm_resume(void)
 {
-	u32 tmp, audiodomain_on;
-
-	tmp = __raw_readl(S5P_NORMAL_CFG);
-	if (tmp & S5PV210_PD_AUDIO)
-		audiodomain_on = 0;
-	else {
-		tmp |= S5PV210_PD_AUDIO;
-		__raw_writel(tmp , S5P_NORMAL_CFG);
-		audiodomain_on = 1;
-	}
+	u32 tmp;
 
 	tmp = __raw_readl(S5P_OTHERS);
 	tmp |= (S5P_OTHERS_RET_IO | S5P_OTHERS_RET_CF |\
 		S5P_OTHERS_RET_MMC | S5P_OTHERS_RET_UART);
 	__raw_writel(tmp , S5P_OTHERS);
 
-	if (audiodomain_on) {
-		tmp = __raw_readl(S5P_NORMAL_CFG);
-		tmp &= ~S5PV210_PD_AUDIO;
-		__raw_writel(tmp , S5P_NORMAL_CFG);
-	}
-
-	s3c_pm_do_restore_core(core_save, ARRAY_SIZE(core_save));
+	s3c_pm_do_restore_core(s5pv210_core_save, ARRAY_SIZE(s5pv210_core_save));
 }
 
 static struct syscore_ops s5pv210_pm_syscore_ops = {

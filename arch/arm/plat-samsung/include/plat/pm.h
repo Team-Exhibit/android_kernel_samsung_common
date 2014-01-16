@@ -43,7 +43,6 @@ extern unsigned long s3c_irqwake_eintallow;
 
 extern void (*pm_cpu_prep)(void);
 extern void (*pm_cpu_sleep)(void);
-extern void (*pm_cpu_restore)(void);
 
 /* Flags for PM Control */
 
@@ -129,7 +128,7 @@ extern void s3c_pm_dbg(const char *msg, ...);
 
 #define S3C_PMDBG(fmt...) s3c_pm_dbg(fmt)
 #else
-#define S3C_PMDBG(fmt...) pr_debug(fmt)
+#define S3C_PMDBG(fmt...) printk(KERN_DEBUG fmt)
 #endif
 
 #ifdef CONFIG_S3C_PM_DEBUG_LED_SMDK

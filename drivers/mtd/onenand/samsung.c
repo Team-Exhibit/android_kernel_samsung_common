@@ -23,60 +23,17 @@
 #include <linux/mtd/partitions.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>
-#include <linux/clk.h>
 
 #include <asm/mach/flash.h>
 #include <plat/regs-onenand.h>
 
 #include <linux/io.h>
 
-#include <asm/setup.h>
-#include <linux/string.h>
-
 enum soc_type {
 	TYPE_S3C6400,
 	TYPE_S3C6410,
 	TYPE_S5PC100,
 	TYPE_S5PC110,
-};
-
-struct mtd_partition s3c_partition_info[] = {
-	{
-		.name		= "misc",
-		.offset		= (768*SZ_1K),          /* for bootloader */
-		.size		= (256*SZ_1K),
-		.mask_flags	= MTD_CAP_NANDFLASH,
-	},
-	{
-		.name		= "recovery",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (5*SZ_1M),
-	},
-	{
-		.name		= "kernel",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (5*SZ_1M),
-	},
-	{
-		.name		= "ramdisk",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (3*SZ_1M),
-	},
-	{
-		.name		= "system",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (90*SZ_1M),
-	},
-	{
-		.name		= "cache",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (80*SZ_1M),
-	},
-	{
-		.name		= "userdata",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= MTDPART_SIZ_FULL,
-	}
 };
 
 #define ONENAND_ERASE_STATUS		0x00
@@ -235,56 +192,6 @@ static void s3c_dump_reg(void)
 	}
 }
 #endif
-
-struct slsi_ptbl_entry {
-	char name[16];
-	__u32 offset;
-	__u32 size;
-	__u32 flags;
-};
-
-struct mtd_partition *partitions;
-int num_partitions;
-
-#define MAX_PARTITIONS 12
-#define ATAG_SLSI_PARTITION 0x28247574
-struct mtd_partition slsi_nand_partitions[MAX_PARTITIONS];
-char slsi_nand_names[MAX_PARTITIONS * 16];
-
-static int __init parse_tag_partition(const struct tag *tag)
-{
-	struct mtd_partition *ptn = slsi_nand_partitions;
-	char *name = slsi_nand_names;
-	struct slsi_ptbl_entry *entry = (void *) &tag->u;
-	unsigned count, n;
-
-	count = (tag->hdr.size - 2) /
-		(sizeof(struct slsi_ptbl_entry) / sizeof(__u32));
-
-	if (count > MAX_PARTITIONS)
-		count = MAX_PARTITIONS;
-
-	for (n = 0; n < count; n++) {
-		memcpy(name, entry->name, 15);
-		name[15] = 0;
-		ptn->name = name;
-		ptn->offset = entry->offset;
-		ptn->size = entry->size;
-
-		printk(KERN_INFO "Partition (from atag) %15s -- Offset:0x%08x Size:0x%08x\n",
-				entry->name, entry->offset, entry->size);
-
-		name += 16;
-		entry++;
-		ptn++;
-	}
-
-	num_partitions = count;
-	partitions = slsi_nand_partitions;
-
-	return 0;
-}
-__tagtable(ATAG_SLSI_PARTITION, parse_tag_partition);
 
 static unsigned int s3c64xx_cmd_map(unsigned type, unsigned val)
 {
@@ -1009,17 +916,6 @@ static int s3c_onenand_probe(struct platform_device *pdev)
 		err = -EFAULT;
 		goto ioremap_failed;
 	}
-
-	this->clk = clk_get(&pdev->dev, "onenand");
-
-	if (IS_ERR(this->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
-		err = PTR_ERR(this->clk);
-		goto clk_failed;
-	}
-
-	clk_enable(this->clk);
-
 	/* Set onenand_chip also */
 	this->base = onenand->base;
 
@@ -1121,27 +1017,6 @@ static int s3c_onenand_probe(struct platform_device *pdev)
 	if (s3c_read_reg(MEM_CFG_OFFSET) & ONENAND_SYS_CFG1_SYNC_READ)
 		dev_info(&onenand->pdev->dev, "OneNAND Sync. Burst Read enabled\n");
 
-#ifdef CONFIG_MTD_CMDLINE_PARTS
-	err = parse_mtd_partitions(mtd, part_probes, &onenand->parts, 0);
-	if (err > 0)
-		mtd_device_register(mtd, onenand->parts, err);
-	else if (err <= 0 && pdata && pdata->parts)
-		mtd_device_register(mtd, pdata->parts, pdata->nr_parts);
-	else
-#endif
-	if (num_partitions <= 0) {
-		/* default partition table */
-		num_partitions = ARRAY_SIZE(s3c_partition_info);	/* pdata->nr_parts */
-		partitions = s3c_partition_info;			/* pdata->parts */
-	}
-
-	if (partitions && num_partitions > 0)
-		err = mtd_device_register(mtd, partitions, num_partitions);
-	else
-		err = mtd_device_register(mtd, NULL, 0);
-
-
-/*
 	err = parse_mtd_partitions(mtd, part_probes, &onenand->parts, 0);
 	if (err > 0)
 		mtd_device_register(mtd, onenand->parts, err);
@@ -1149,11 +1024,9 @@ static int s3c_onenand_probe(struct platform_device *pdev)
 		mtd_device_register(mtd, pdata->parts, pdata->nr_parts);
 	else
 		err = mtd_device_register(mtd, NULL, 0);
-*/
 
 	platform_set_drvdata(pdev, mtd);
 
-	clk_disable(this->clk);
 	return 0;
 
 scan_failed:
@@ -1176,9 +1049,6 @@ ahb_ioremap_failed:
 dma_resource_failed:
 ahb_resource_failed:
 	iounmap(onenand->base);
-	clk_disable(this->clk);
-	clk_put(this->clk);
-clk_failed:
 ioremap_failed:
 	if (onenand->base_res)
 		release_mem_region(onenand->base_res->start,
@@ -1193,7 +1063,6 @@ onenand_fail:
 static int __devexit s3c_onenand_remove(struct platform_device *pdev)
 {
 	struct mtd_info *mtd = platform_get_drvdata(pdev);
-	struct onenand_chip *this = mtd->priv;
 
 	onenand_release(mtd);
 	if (onenand->ahb_addr)
@@ -1214,9 +1083,18 @@ static int __devexit s3c_onenand_remove(struct platform_device *pdev)
 	platform_set_drvdata(pdev, NULL);
 	kfree(onenand->oob_buf);
 	kfree(onenand->page_buf);
-	clk_put(this->clk);
 	kfree(onenand);
 	kfree(mtd);
+	return 0;
+}
+
+static int s3c_pm_ops_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct mtd_info *mtd = platform_get_drvdata(pdev);
+	struct onenand_chip *this = mtd->priv;
+
+	this->wait(mtd, FL_PM_SUSPENDED);
 	return 0;
 }
 
@@ -1226,13 +1104,12 @@ static  int s3c_pm_ops_resume(struct device *dev)
 	struct mtd_info *mtd = platform_get_drvdata(pdev);
 	struct onenand_chip *this = mtd->priv;
 
-	clk_enable(this->clk);
 	this->unlock_all(mtd);
-	clk_disable(this->clk);
 	return 0;
 }
 
 static const struct dev_pm_ops s3c_pm_ops = {
+	.suspend	= s3c_pm_ops_suspend,
 	.resume		= s3c_pm_ops_resume,
 };
 

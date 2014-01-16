@@ -792,8 +792,14 @@ static int rfcomm_send_ua(struct rfcomm_session *s, u8 dlci)
 static int rfcomm_send_disc(struct rfcomm_session *s, u8 dlci)
 {
 	struct rfcomm_cmd cmd;
+	struct sock *sk = s->sock->sk;
+	struct l2cap_conn *conn = l2cap_pi(sk)->chan->conn;
 
 	BT_DBG("%p dlci %d", s, dlci);
+	/* Force remote out of the sniff mode so that it
+	will immediately notice the disconnection. This change
+	was introduced according to AOSP comments */
+	hci_conn_enter_active_mode(conn->hcon, 1);
 
 	cmd.addr = __addr(s->initiator, dlci);
 	cmd.ctrl = __ctrl(RFCOMM_DISC, 1);
@@ -1158,12 +1164,18 @@ static int rfcomm_recv_ua(struct rfcomm_session *s, u8 dlci)
 			break;
 
 		case BT_DISCONN:
-			/* When socket is closed and we are not RFCOMM
-			 * initiator rfcomm_process_rx already calls
-			 * rfcomm_session_put() */
-			if (s->sock->sk->sk_state != BT_CLOSED)
-				if (list_empty(&s->dlcs))
-					rfcomm_session_put(s);
+			/* rfcomm_session_put is called later so don't do
+			 * anything here otherwise we will mess up the session
+			 * reference counter:
+			 *
+			 * (a) when we are the initiator dlc_unlink will drive
+			 * the reference counter to 0 (there is no initial put
+			 * after session_add)
+			 *
+			 * (b) when we are not the initiator rfcomm_rx_process
+			 * will explicitly call put to balance the initial hold
+			 * done after session add.
+			 */
 			break;
 		}
 	}
@@ -1801,6 +1813,11 @@ static inline void rfcomm_process_dlcs(struct rfcomm_session *s)
 			continue;
 		}
 
+		if (test_bit(RFCOMM_ENC_DROP, &d->flags)) {
+			__rfcomm_dlc_close(d, ECONNREFUSED);
+			continue;
+		}
+
 		if (test_and_clear_bit(RFCOMM_AUTH_ACCEPT, &d->flags)) {
 			rfcomm_dlc_clear_timer(d);
 			if (d->out) {
@@ -2073,7 +2090,7 @@ static void rfcomm_security_cfm(struct hci_conn *conn, u8 status, u8 encrypt)
 		if (test_and_clear_bit(RFCOMM_SEC_PENDING, &d->flags)) {
 			rfcomm_dlc_clear_timer(d);
 			if (status || encrypt == 0x00) {
-				__rfcomm_dlc_close(d, ECONNREFUSED);
+				set_bit(RFCOMM_ENC_DROP, &d->flags);
 				continue;
 			}
 		}
@@ -2084,7 +2101,7 @@ static void rfcomm_security_cfm(struct hci_conn *conn, u8 status, u8 encrypt)
 				rfcomm_dlc_set_timer(d, RFCOMM_AUTH_TIMEOUT);
 				continue;
 			} else if (d->sec_level == BT_SECURITY_HIGH) {
-				__rfcomm_dlc_close(d, ECONNREFUSED);
+				set_bit(RFCOMM_ENC_DROP, &d->flags);
 				continue;
 			}
 		}

@@ -22,7 +22,6 @@
 #include <linux/kallsyms.h>
 #include <linux/mutex.h>
 #include <linux/async.h>
-#include <linux/pm_runtime.h>
 
 #include "base.h"
 #include "power/power.h"
@@ -1678,8 +1677,7 @@ int device_move(struct device *dev, struct device *new_parent,
 		set_dev_node(dev, dev_to_node(new_parent));
 	}
 
-	if (!dev->class)
-		goto out_put;
+	if (dev->class) {
 	error = device_move_class_links(dev, old_parent, new_parent);
 	if (error) {
 		/* We ignore errors on cleanup since we're hosed anyway... */
@@ -1697,6 +1695,7 @@ int device_move(struct device *dev, struct device *new_parent,
 		cleanup_glue_dir(dev, new_parent_kobj);
 		put_device(new_parent);
 		goto out;
+	}
 	}
 	switch (dpm_order) {
 	case DPM_ORDER_NONE:
@@ -1743,10 +1742,6 @@ void device_shutdown(void)
 		 */
 		list_del_init(&dev->kobj.entry);
 		spin_unlock(&devices_kset->list_lock);
-
-		/* Don't allow any more runtime suspends */
-		pm_runtime_get_noresume(dev);
-		pm_runtime_barrier(dev);
 
 		if (dev->bus && dev->bus->shutdown) {
 			dev_dbg(dev, "shutdown\n");

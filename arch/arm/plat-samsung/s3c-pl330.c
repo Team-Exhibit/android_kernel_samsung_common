@@ -747,11 +747,8 @@ int s3c2410_dma_request(enum dma_ch id,
 
 	dmac = ch->dmac;
 
-	clk_enable(dmac->clk);
-
 	ch->pl330_chan_id = pl330_request_channel(dmac->pi);
 	if (!ch->pl330_chan_id) {
-		clk_disable(dmac->clk);
 		chan_release(ch);
 		ret = -EBUSY;
 		goto req_exit;
@@ -863,7 +860,7 @@ int s3c2410_dma_free(enum dma_ch id, struct s3c2410_dma_client *client)
 	pl330_release_channel(ch->pl330_chan_id);
 
 	ch->pl330_chan_id = NULL;
-	clk_disable(ch->dmac->clk);
+
 	chan_release(ch);
 
 free_exit:
@@ -988,18 +985,6 @@ int s3c2410_dma_devconfig(enum dma_ch id, enum s3c2410_dmasrc source,
 		ch->req[1].rqtype = MEMTODEV;
 		ch->rqcfg.src_inc = 1;
 		ch->rqcfg.dst_inc = 0;
-		break;
-	case S3C_DMA_MEM2MEM:
-		ch->req[0].rqtype = MEMTOMEM;
-		ch->req[1].rqtype = MEMTOMEM;
-		ch->rqcfg.src_inc = 1;
-		ch->rqcfg.dst_inc = 1;
-		break;
-	case S3C_DMA_MEM2MEM_SET:
-		ch->req[0].rqtype = MEMTOMEM;
-		ch->req[1].rqtype = MEMTOMEM;
-		ch->rqcfg.src_inc = 0;
-		ch->rqcfg.dst_inc = 1;
 		break;
 	default:
 		ret = -EINVAL;
@@ -1146,7 +1131,6 @@ static int pl330_probe(struct platform_device *pdev)
 		pl330_info->pcfg.data_bus_width / 8, pl330_info->pcfg.num_chan,
 		pl330_info->pcfg.num_peri, pl330_info->pcfg.num_events);
 
-	clk_disable(s3c_pl330_dmac->clk);
 	return 0;
 
 probe_err8:
@@ -1172,7 +1156,7 @@ probe_err1:
 static int pl330_remove(struct platform_device *pdev)
 {
 	struct s3c_pl330_dmac *dmac, *d;
-	struct s3c_pl330_chan *ch, *cht;
+	struct s3c_pl330_chan *ch;
 	unsigned long flags;
 	int del, found;
 
@@ -1196,7 +1180,7 @@ static int pl330_remove(struct platform_device *pdev)
 	dmac = d;
 
 	/* Remove all Channels that are managed only by this DMAC */
-	list_for_each_entry_safe(ch, cht, &chan_list, node) {
+	list_for_each_entry(ch, &chan_list, node) {
 
 		/* Only channels that are handled by this DMAC */
 		if (iface_of_dmac(dmac, ch->id))
@@ -1221,6 +1205,7 @@ static int pl330_remove(struct platform_device *pdev)
 	}
 
 	/* Disable operation clock */
+	clk_disable(dmac->clk);
 	clk_put(dmac->clk);
 
 	/* Remove the DMAC */

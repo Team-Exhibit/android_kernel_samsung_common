@@ -17,17 +17,12 @@ obj-y				+= dev-uart.o
 obj-y				+= cpu.o
 obj-y				+= clock.o
 obj-y				+= irq.o
-obj-y				+= devs.o
-obj-y				+= bootmem.o
-obj-y				+= reset.o
-obj-$(CONFIG_S5P_EXT_INT)	+= irq-eint.o irq-eint-group.o
+obj-$(CONFIG_S5P_EXT_INT)	+= irq-eint.o
 obj-$(CONFIG_S5P_GPIO_INT)	+= irq-gpioint.o
 obj-$(CONFIG_S5P_SYSTEM_MMU)	+= sysmmu.o
 obj-$(CONFIG_PM)		+= pm.o
 obj-$(CONFIG_PM)		+= irq-pm.o
-ifndef CONFIG_S5P_HIGH_RES_TIMERS
 obj-$(CONFIG_S5P_HRT) 		+= s5p-time.o
-endif
 
 # devices
 
@@ -40,22 +35,3 @@ obj-$(CONFIG_S5P_DEV_CSIS0)	+= dev-csis0.o
 obj-$(CONFIG_S5P_DEV_CSIS1)	+= dev-csis1.o
 obj-$(CONFIG_S5P_DEV_USB_EHCI)	+= dev-ehci.o
 obj-$(CONFIG_S5P_SETUP_MIPIPHY)	+= setup-mipiphy.o
-
-# PM support
-
-# PM support
-
-obj-$(CONFIG_PM)		+= pm.o
-obj-$(CONFIG_PM)		+= irq-pm.o
-
-ifdef CONFIG_S5P_HIGH_RES_TIMERS
-ifdef CONFIG_HRT_RTC
-obj-y				+= hr-time-rtc.o
-endif
-endif
-
-obj-$(CONFIG_S5P_DEV_MFC)	+= dev-mfc.o
-obj-$(CONFIG_S5P_SETUP_MFC)	+= setup-mfc.o
-
-
-EXTRA_CFLAGS += -Idrivers/video/samsung
