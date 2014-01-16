@@ -222,7 +222,7 @@ static irqreturn_t pl031_interrupt(int irq, void *dev_id)
 	rtcmis = readl(ldata->base + RTC_MIS);
 	if (rtcmis & RTC_BIT_AI) {
 		writel(RTC_BIT_AI, ldata->base + RTC_ICR);
-			events |= (RTC_AF | RTC_IRQF);
+		events |= (RTC_AF | RTC_IRQF);
 		rtc_update_irq(ldata->rtc, 1, events);
 
 		return IRQ_HANDLED;
@@ -344,17 +344,6 @@ static int pl031_probe(struct amba_device *adev, const struct amba_id *id)
 			time = readl(ldata->base + RTC_DR);
 			if ((time & (RTC_MON_MASK | RTC_MDAY_MASK \
 				| RTC_WDAY_MASK)) == 0x02120000) {
-
-	/*
-	 * On ST PL031 variants, the RTC reset value does not provide correct
-	 * weekday for 2000-01-01. Correct the erroneous sunday to saturday.
-	 */
-	if (ldata->hw_designer == AMBA_VENDOR_ST) {
-		if (readl(ldata->base + RTC_YDR) == 0x2000) {
-			time = readl(ldata->base + RTC_DR);
-			if ((time &
-			     (RTC_MON_MASK | RTC_MDAY_MASK | RTC_WDAY_MASK))
-			    == 0x02120000) {
 				time = time | (0x7 << RTC_WDAY_SHIFT);
 				writel(0x2000, ldata->base + RTC_YLR);
 				writel(time, ldata->base + RTC_LR);
